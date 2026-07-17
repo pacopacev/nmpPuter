@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Flowbit Chat</title>
+    <style>
+        /* (keep your existing styles, they are fine) */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #3ac0c0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-top: 0;
+            color: #1a1a2e;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4a6cf7;
+        }
+        button {
+            padding: 12px 28px;
+            background: #4a6cf7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #3a5cdb;
+        }
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        #answer {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f1f3f5;
+            border-radius: 8px;
+            /* border-left: 4px solid #4a6cf7; */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 60px;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            border-left-color: #e74c3c;
+            background: #fde8e8;
+            color: #c0392b;
+        }
+        .model-selector {
+            margin: 10px 0 20px 0;
+        }
+        select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            font-size: 14px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><stron>Flowbit Ask</stron></h1>
+        <p>Ask anything – the AI will respond using <strong id="modelDisplay"></strong> </p>
+        
+        <div class="model-selector">
+            <label for="modelSelect">Choose model:</label>
+            <select id="modelSelect">
+                <option value="gpt-5.4-nano">              </option>
+                <option value="gpt-5.3-codex">gpt-5.3-codex</option>
+                <option value="gpt-4o">gpt-4o</option>
+                <!-- Add more as needed -->
+            </select>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="question" placeholder="Type your question here..." value="">
+            <button id="askBtn">Give me aswer</button>
+        </div>
+
+        <div id="answer">Your answer will appear here.</div>
+    </div>
+
+    <script src="https://js.puter.com/v2/"></script>
+    <script>
+
+        
+        // DOM elements
+        const questionInput = document.getElementById('question');
+        const askBtn = document.getElementById('askBtn');
+        const answerDiv = document.getElementById('answer');
+        const modelSelect = document.getElementById('modelSelect');
+        const modelDisplay = document.getElementById('modelDisplay');
+
+        // const all_models = puter.ai.listModels(provider = null);
+
+        async function loadModels(modelDisplay, modelSelect) {
+    // Fix: Just pass null, or nothing if it's default
+    const models = await puter.ai.listModels(null);
+    
+    // Fix: Move html OUTSIDE the loop
+    let html = '';
+    
+    // Fix: Add curly braces { } since we have multiple statements
+    models.forEach(model => {
+        // You might want to check if aliases exists and has a first element to avoid errors
+        if (model.aliases && model.aliases.length > 0) {
+            html += `<option value="${model.aliases[0]}">${model.aliases[0]}</option>`;
+        }
+        
+    });
+    
+    // Fix: Set the innerHTML ONCE, after the loop finishes
+    document.getElementById('modelSelect').innerHTML = html;
+
+    modelSelect.addEventListener('change', function() {
+            modelDisplay.textContent = this.value;
+        });
+
+
+
+
+
+    
+}
+
+loadModels(modelDisplay, modelSelect);
+
+        async function askAI() {
+            const question = questionInput.value.trim();
+            const selectedModel = modelSelect.value;   // <-- get current value here
+
+         
+
+
+            if (!question) {
+                answerDiv.innerHTML = '⚠️ Please enter a question.';
+                answerDiv.className = 'error';
+                return;
+            }
+
+            // Disable button and show loading
+            askBtn.disabled = true;
+            askBtn.textContent = 'Thinking...';
+            answerDiv.innerHTML = '<span class="loading">⏳ Getting response...</span>';
+            answerDiv.className = '';
+
+            try {
+                // Optional: check usage (uncomment if you want)
+                // const usage = await puter.ai.getMonthlyUsage();
+                // console.log('Usage:', usage);
+
+                console.log(`Asking AI with model: ${selectedModel}`);
+
+                const response = await puter.ai.chat(question, {
+                    model: selectedModel,
+                    // driver: "openrouter"  // uncomment if needed
+                });
+
+                answerDiv.innerHTML = response;
+                answerDiv.className = '';
+            } catch (error) {
+                console.error('AI Error:', error);
+                let friendlyMessage = 'Something went wrong. Please try again.';
+                if (error.message && error.message.includes('usage')) {
+                    friendlyMessage = 'You have reached your AI usage limit. Please wait or upgrade.';
+                } else if (error.message && error.message.includes('Internal Server Error')) {
+                    friendlyMessage = 'The AI service is temporarily unavailable. Try a different model or wait a moment.';
+                }
+                answerDiv.innerHTML = `❌ Error: ${friendlyMessage}`;
+                answerDiv.className = 'error';
+            } finally {
+                askBtn.disabled = false;
+                askBtn.textContent = 'Give me aswer';
+            }
+        }
+
+        // Event listeners
+        askBtn.addEventListener('click', askAI);
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                askAI();
+            }
+        });
+
+        // Auto‑ask on page load (optional)
+        window.addEventListener('load', askAI);
+    </script>
+</body>
+</html>
