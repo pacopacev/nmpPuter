@@ -88,6 +88,40 @@
             font-size: 14px;
             background: white;
         }
+
+                #modelSelect {
+            width: 100%;
+            max-width: 400px;
+            padding: 14px 18px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background-color: white;
+            color: #222;
+            transition: border 0.2s;
+            /* Custom arrow */
+            appearance: none;
+            -webkit-appearance: none;
+            
+        }
+
+                #modelSelect:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        /* Mobile touches: Make it BIG */
+        @media (max-width: 600px) {
+            #modelSelect {
+                font-size: 20px;
+                padding: 16px 20px;
+                height: 58px;
+                max-width: 100%;
+                border-radius: 14px;
+            }
+        }
+
+        
     </style>
 </head>
 <body>
